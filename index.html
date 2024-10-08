@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arduino Serial Data Display</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to right, #74ebd5, #9face6); /* Gradient background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden; /* Prevent scrollbars */
+    }
+
+    .container {
+      text-align: center;
+      background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+      border-radius: 15px; /* Rounded corners */
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); /* Soft shadow effect */
+      padding: 30px; /* Increased padding */
+      width: 90%; /* Full width on mobile */
+      max-width: 600px; /* Maximum width */
+      transition: transform 0.2s; /* Transition effect on hover */
+      backdrop-filter: blur(10px); /* Blurred background effect */
+    }
+
+    .container:hover {
+      transform: scale(1.02); /* Slightly enlarge on hover */
+    }
+
+    h1 {
+      color: #333; /* Dark text color */
+      font-size: 28px; /* Larger font size */
+      margin-bottom: 20px; /* Spacing below the heading */
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Subtle text shadow */
+    }
+
+    .output-box {
+      border: 1px solid rgba(0, 0, 0, 0.1); /* Light grey border */
+      border-radius: 10px; /* Rounded corners for output box */
+      padding: 15px; /* Padding within output box */
+      background: linear-gradient(135deg, #f0f0f5, #e0eafc); /* Light gradient for output */
+      min-height: 80px; /* Increased minimum height */
+      max-height: 120px; /* Ensures it doesn’t get too tall */
+      overflow-y: auto; /* Enable scrolling if content exceeds max height */
+      word-wrap: break-word; /* Break long words */
+      white-space: pre-wrap; /* Preserve white spaces */
+      font-size: 20px; /* Larger font size for output */
+      color: #333; /* Text color */
+      transition: background-color 0.3s; /* Smooth background transition */
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Shadow for the output box */
+    }
+
+    .output-box:hover {
+      background-color: rgba(255, 255, 255, 0.8); /* Change background on hover */
+    }
+
+    button {
+      margin-top: 20px; /* Spacing above button */
+      padding: 10px 20px; /* Button padding */
+      font-size: 18px; /* Button font size */
+      background-color: #007bff; /* Blue button */
+      color: white; /* White text color */
+      border: none; /* No border */
+      border-radius: 5px; /* Rounded corners */
+      cursor: pointer; /* Pointer cursor on hover */
+      transition: background-color 0.3s; /* Smooth transition */
+    }
+
+    button:hover {
+      background-color: #0056b3; /* Darker blue on hover */
+    }
+
+    button:focus {
+      outline: none; /* Remove default focus outline */
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add focus shadow */
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Arduino Serial Data</h1>
+  <div id="output" class="output-box">
+    Click "Connect to Arduino" to view data.
+  </div>
+  <button id="connectButton">Connect to Arduino</button>
+</div>
+
+<script>
+  const connectButton = document.getElementById('connectButton');
+  const outputBox = document.getElementById('output');
+
+  async function connectToArduino() {
+  try {
+    const port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+
+    outputBox.textContent = 'Connected to Arduino...';
+
+    const decoder = new TextDecoderStream();
+    const inputDone = port.readable.pipeTo(decoder.writable);
+    const inputStream = decoder.readable.getReader();
+
+    while (true) {
+      const { value, done } = await inputStream.read();
+      if (done) {
+        outputBox.textContent = 'Disconnected from Arduino';
+        break;
+      }
+      // Append the new value instead of replacing
+      outputBox.textContent += value;
+      // Auto-scroll to the bottom as new data arrives
+      outputBox.scrollTop = outputBox.scrollHeight;
+    }
+  } catch (err) {
+    console.error('Error connecting to Arduino:', err);
+    outputBox.textContent = 'Failed to connect to Arduino. Ensure the port is available.';
+  }
+}
+
+    
+  
+
+  connectButton.addEventListener('click', connectToArduino);
+</script>
+
+</body>
+</html>
+
+
